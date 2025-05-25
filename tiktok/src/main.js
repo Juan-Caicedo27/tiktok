@@ -1,132 +1,222 @@
-// main.js
+// src/main.js
 
-// Importa el cliente de Supabase y las funciones de interacción desde supabase.js
 import {
-    supabase, // Necesitas el cliente supabase para el onAuthStateChange
+    supabase,
     signUpUser,
     signInUser,
     signOutUser,
-    fetchVideos,
-    uploadVideoFile,
-    insertVideoDetails,
     checkLike,
     addLike,
     removeLike,
-    updateVideoLikeCount
+    updateVideoLikeCount,
+    // ¡Nuevas funciones importadas!
+    addComment,
+    getCommentsByVideoId,
+    updateVideoCommentCount
 } from './supabase.js';
 
+// --- VIDEOS DE PRUEBA PERMANENTES ---
+// Asegúrate de que estos video_id coincidan con los que insertaste en tu tabla Videos
+const DUMMY_VIDEOS = [
+    {
+        video_id: 1, // ¡Importante que coincida con la DB!
+        video_url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+        thumbnail_url: 'https://via.placeholder.com/400x600/000000/FFFFFF?text=Video+1',
+        description: '¡Primer video de prueba! Un video clásico para el feed. #demo #tiktokclone #frontend',
+        music_info: 'Artista Prueba - Canción Demo 1',
+        // Los conteos (like_count, comment_count) serán actualizados desde la DB
+        view_count: 0,
+        like_count: 0,
+        comment_count: 0,
+        share_count: 0,
+        created_at: new Date().toISOString(),
+        // Users es para el ejemplo de datos, pero el real vendrá de la DB
+        Users: {
+            username: 'demouser1',
+            profile_picture_url: 'https://via.placeholder.com/40/FF0000/FFFFFF?text=D1'
+        }
+    },
+    {
+        video_id: 2, // ¡Importante que coincida con la DB!
+        video_url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        thumbnail_url: 'https://via.placeholder.com/400x600/000000/FFFFFF?text=Video+2',
+        description: 'Segundo video de prueba. ¡Un clásico para el feed! #classic #bunny',
+        music_info: 'Old School Vibes - Epic Beat',
+        view_count: 0,
+        like_count: 0,
+        comment_count: 0,
+        share_count: 0,
+        created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
+        Users: {
+            username: 'demouser2',
+            profile_picture_url: 'https://via.placeholder.com/40/00FF00/FFFFFF?text=D2'
+        }
+    },
+    {
+        video_id: 3, // ¡Importante que coincida con la DB!
+        video_url: 'http://techslides.com/demos/sample-videos/small.mp4',
+        thumbnail_url: 'https://via.placeholder.com/400x600/000000/FFFFFF?text=Video+3',
+        description: 'Tercer video de prueba, pequeño y ágil. #small #test',
+        music_info: 'Quick Tune - Short Loop',
+        view_count: 0,
+        like_count: 0,
+        comment_count: 0,
+        share_count: 0,
+        created_at: new Date(Date.now() - 7200 * 1000).toISOString(),
+        Users: {
+            username: 'demouser3',
+            profile_picture_url: 'https://via.placeholder.com/40/0000FF/FFFFFF?text=D3'
+        }
+    }
+];
+
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- Referencias a elementos del DOM ---
+    // --- Elementos del DOM ---
     const videoFeed = document.getElementById('videoFeed');
     const authModal = document.getElementById('auth-modal');
-    const uploadModal = document.getElementById('upload-modal');
-    const closeButtons = document.querySelectorAll('.close-button');
     const loginSignupBtn = document.getElementById('login-signup-btn');
-    const uploadVideoBtn = document.getElementById('upload-video-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const currentProfileSection = document.getElementById('current-user-profile');
-    const usernameSmall = document.getElementById('username-small');
-    const userAvatarSmall = document.getElementById('user-avatar-small');
+    const closeAuthModalBtn = authModal ? authModal.querySelector('#close-auth-modal') : null; // Usa ID si el modal tiene varios close-button
 
-    // --- Funciones de Interfaz de Usuario (Modals) ---
+    const signupButton = document.getElementById('signup-button');
+    const loginButton = document.getElementById('login-button');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // Elementos para el modal de comentarios
+    const commentsModal = document.getElementById('comments-modal');
+    const closeCommentsModalBtn = commentsModal ? commentsModal.querySelector('#close-comments-modal') : null;
+    const commentsList = document.getElementById('comments-list');
+    const commentTextInput = document.getElementById('comment-text-input');
+    const postCommentButton = document.getElementById('post-comment-button');
+    const commentStatusMessage = document.getElementById('comment-status-message');
+
+    let currentVideoIdForComments = null; // Variable para saber qué video estamos comentando
+
+    // --- Ocultar el botón de subir video y el modal de subida (ahora no se usan) ---
+    // Si tu HTML aún los tiene, puedes ocultarlos con JS por si acaso.
+    // También asegúrate de haberlos comentado/eliminado en tu index.html
+    const uploadVideoBtn = document.getElementById('upload-video-btn');
+    if (uploadVideoBtn) {
+        uploadVideoBtn.style.display = 'none';
+    }
+    const uploadModal = document.getElementById('upload-modal');
+    if (uploadModal) {
+        uploadModal.style.display = 'none';
+    }
+
+
+    // --- Funciones auxiliares para modales ---
     function openModal(modal) {
-        modal.style.display = 'flex';
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex'; // o 'block' dependiendo de tu CSS
+        }
     }
 
     function closeModal(modal) {
-        modal.style.display = 'none';
+        if (modal) {
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+        }
     }
 
-    closeButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
-            closeModal(event.target.closest('.modal'));
-        });
-    });
-
-    window.addEventListener('click', (event) => {
-        if (event.target === authModal) closeModal(authModal);
-        if (event.target === uploadModal) closeModal(uploadModal);
-    });
-
-    loginSignupBtn.addEventListener('click', () => openModal(authModal));
-    uploadVideoBtn.addEventListener('click', async () => {
-        const user = (await supabase.auth.getUser()).data.user;
-        if (user) {
-            openModal(uploadModal);
-        } else {
-            alert('Debes iniciar sesión para subir videos.');
-            openModal(authModal);
-        }
-    });
-    logoutBtn.addEventListener('click', async () => {
-        const { error } = await signOutUser(); // Llama a la función de supabase.js
-        if (error) {
-            console.error('Error al cerrar sesión:', error.message);
-            alert('Error al cerrar sesión.');
-        } else {
-            console.log('Sesión cerrada.');
-            updateAuthUI(null); // Actualiza la UI a estado no logueado
-            await loadVideos(); // Recarga videos (si el feed "Para Ti" no necesita autenticación)
-        }
-    });
-
-    // --- Funciones de Autenticación (ahora usan las funciones de supabase.js) ---
-    document.getElementById('signup-button').addEventListener('click', async () => {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        const { data, error } = await signUpUser(email, password); // Llama a la función de supabase.js
-
-        if (error) {
-            alert('Error al registrarse: ' + error.message);
-        } else {
-            alert('Registro exitoso. Revisa tu correo para confirmar.');
-            closeModal(authModal);
-        }
-    });
-
-    document.getElementById('login-button').addEventListener('click', async () => {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        const { data, error } = await signInUser(email, password); // Llama a la función de supabase.js
-
-        if (error) {
-            alert('Error al iniciar sesión: ' + error.message);
-        } else {
-            alert('Inicio de sesión exitoso.');
-            closeModal(authModal);
-            updateAuthUI(data.user);
-            await loadVideos(); // Recargar videos, si el feed depende de la autenticación
-        }
-    });
-
-    // Escucha cambios en el estado de autenticación (sigue usando el cliente de supabase directamente)
-    supabase.auth.onAuthStateChange((event, session) => {
-        updateAuthUI(session ? session.user : null);
-    });
-
+    // --- Funciones de Autenticación ---
     function updateAuthUI(user) {
+        const loginSignupContainer = document.getElementById('login-signup-btn');
+        const currentUserProfile = document.getElementById('current-user-profile');
+        const logoutButtonContainer = document.getElementById('logout-btn');
+
         if (user) {
-            loginSignupBtn.style.display = 'none';
-            logoutBtn.style.display = 'flex';
-            currentProfileSection.style.display = 'flex';
-            // Para el nombre de usuario, si no lo tienes en tu tabla Users, puedes usar parte del email
-            usernameSmall.textContent = user.email ? user.email.split('@')[0] : 'Usuario';
-            // Si tu tabla Users tiene un 'profile_picture_url' y puedes accederlo
-            // userAvatarSmall.src = user.user_metadata?.profile_picture_url || 'https://via.placeholder.com/30';
+            if (loginSignupContainer) loginSignupContainer.style.display = 'none';
+            if (currentUserProfile) {
+                currentUserProfile.style.display = 'flex';
+                // Opcional: Actualizar info del usuario si la tienes en user_metadata (ej. nombre de usuario, avatar)
+                // document.getElementById('user-avatar-small').src = user.user_metadata.avatar_url || 'https://via.placeholder.com/30';
+                // document.getElementById('username-small').textContent = user.user_metadata.username || user.email;
+            }
+            if (logoutButtonContainer) logoutButtonContainer.style.display = 'flex';
         } else {
-            loginSignupBtn.style.display = 'flex';
-            logoutBtn.style.display = 'none';
-            currentProfileSection.style.display = 'none';
+            if (loginSignupContainer) loginSignupContainer.style.display = 'flex';
+            if (currentUserProfile) currentUserProfile.style.display = 'none';
+            if (logoutButtonContainer) logoutButtonContainer.style.display = 'none';
         }
     }
 
-    // --- Funciones para crear las tarjetas de video ---
+    // --- Listeners para abrir/cerrar modales de auth ---
+    if (loginSignupBtn) {
+        loginSignupBtn.addEventListener('click', () => openModal(authModal));
+    }
+    if (closeAuthModalBtn) {
+        closeAuthModalBtn.addEventListener('click', () => closeModal(authModal));
+    }
+
+
+    // --- Listeners para autenticación ---
+    if (loginButton) {
+        loginButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('auth-email');
+            const passwordInput = document.getElementById('auth-password');
+            if (!emailInput || !passwordInput) {
+                console.error('Inputs de email/password no encontrados en el modal de autenticación.');
+                return;
+            }
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { error } = await signInUser(email, password);
+            if (error) {
+                alert(error.message);
+            } else {
+                closeModal(authModal);
+                alert('¡Inicio de sesión exitoso!');
+                initApp(); // Recargar videos para que los likes/comments usen el user real
+            }
+        });
+    }
+
+    if (signupButton) {
+        signupButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const emailInput = document.getElementById('auth-email');
+            const passwordInput = document.getElementById('auth-password');
+            if (!emailInput || !passwordInput) {
+                console.error('Inputs de email/password no encontrados en el modal de autenticación.');
+                return;
+            }
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            const { error } = await signUpUser(email, password);
+            if (error) {
+                alert(error.message);
+            } else {
+                closeModal(authModal);
+                alert('¡Registro exitoso! Por favor, revisa tu email para confirmar tu cuenta.');
+                initApp();
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            const { error } = await signOutUser();
+            if (error) {
+                alert(error.message);
+            } else {
+                alert('Sesión cerrada.');
+                initApp(); // Recargar videos para que los likes/comments ya no funcionen (requieren login)
+            }
+        });
+    }
+
+
+    // --- Función para crear la tarjeta de video ---
     function createVideoCard(videoData) {
         const videoCard = document.createElement('div');
         videoCard.classList.add('video-card');
-        videoCard.dataset.videoId = videoData.video_id; // Almacena el ID del video
+        videoCard.dataset.videoId = videoData.video_id;
 
-        // Asegúrate de acceder a los datos del creador correctamente desde el objeto `Users` anidado
+        // Si la tabla Users no tiene el campo username, o si lo obtienes de otra forma, ajusta esto.
+        // Asume que videoData.Users.username y profile_picture_url vienen del join con la tabla Users.
         const creatorUsername = videoData.Users ? videoData.Users.username : 'Desconocido';
         const creatorAvatarUrl = videoData.Users ? videoData.Users.profile_picture_url : 'https://via.placeholder.com/40';
 
@@ -149,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        // Los botones de interacción ahora se añaden como un overlay dentro de cada tarjeta de video
         const interactionButtonsContainer = document.createElement('div');
         interactionButtonsContainer.classList.add('video-interaction-overlay');
         interactionButtonsContainer.innerHTML = `
@@ -171,24 +260,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         videoCard.appendChild(interactionButtonsContainer);
 
-
-        // Lógica para pausar/reproducir video al estar visible
+        // Lógica de reproducción/pausa al scroll
         const videoElement = videoCard.querySelector('video');
-
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     videoElement.play();
                 } else {
                     videoElement.pause();
-                    videoElement.currentTime = 0; // Opcional: reiniciar el video al salir de la vista
+                    videoElement.currentTime = 0;
                 }
             });
-        }, { threshold: 0.75 }); // 75% del video debe ser visible para interactuar
-
+        }, { threshold: 0.75 });
         observer.observe(videoCard);
 
-        // Reproducir/pausar al hacer clic
         videoElement.addEventListener('click', () => {
             if (videoElement.paused) {
                 videoElement.play();
@@ -197,158 +282,257 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Event listener para el botón de "Me gusta"
+        // --- Lógica para el botón de "Me gusta" ---
         const likeButton = videoCard.querySelector('.like-btn');
+        const likeCountSpan = likeButton.querySelector('.like-count');
+
+        // Función para inicializar el estado del like al cargar el video
+        async function initializeLikeState(currentUser) {
+            if (!currentUser || !currentUser.id) {
+                console.warn('No hay usuario logueado para inicializar el estado de likes.');
+                likeButton.classList.remove('liked');
+                likeButton.classList.add('disabled-like');
+                return;
+            } else {
+                likeButton.classList.remove('disabled-like');
+            }
+
+            const { data: isLiked, error: checkError } = await checkLike(currentUser.id, videoData.video_id);
+            if (!checkError && isLiked) {
+                likeButton.classList.add('liked');
+            } else if (checkError && checkError.code !== 'PGRST116') {
+                console.error('Error al verificar like inicial:', checkError.message);
+            }
+
+            // Obtener y mostrar el contador de likes actual desde la DB (para asegurar que sea el valor real)
+            const { data: videoFromDB, error: fetchVideoError } = await supabase
+                .from('Videos')
+                .select('like_count, comment_count') // También obtenemos comment_count aquí
+                .eq('video_id', videoData.video_id)
+                .single();
+
+            if (!fetchVideoError && videoFromDB) {
+                likeCountSpan.textContent = videoFromDB.like_count || 0;
+                commentCountSpan.textContent = videoFromDB.comment_count || 0; // Actualiza también el de comentarios
+            } else {
+                console.error('Error al cargar conteos para video (initializeLikeState):', fetchVideoError?.message || 'Video no encontrado en DB');
+            }
+        }
+
+        // Llamar a initializeLikeState DENTRO de createVideoCard
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            initializeLikeState(user);
+        }).catch(err => {
+            console.error('Error obteniendo usuario para initializeLikeState:', err);
+        });
+
         if (likeButton) {
             likeButton.addEventListener('click', async () => {
-                const user = (await supabase.auth.getUser()).data.user; // Obtener usuario autenticado
+                const { data: { user } } = await supabase.auth.getUser();
                 if (!user) {
                     alert('Debes iniciar sesión para dar "me gusta".');
                     openModal(authModal);
                     return;
                 }
 
-                const userId = user.id; // El ID del usuario en Supabase Auth
-                const videoId = parseInt(likeButton.dataset.videoId); // El ID del video de la tarjeta
+                const videoId = videoData.video_id;
+                const { data: isLiked, error: checkError } = await checkLike(user.id, videoId);
 
-                // Verificar si el usuario ya dio like a este video
-                const { data: existingLike, error: checkError } = await checkLike(userId, videoId);
-
-                if (checkError) {
+                if (checkError && checkError.code !== 'PGRST116') {
                     console.error('Error al verificar like:', checkError.message);
                     return;
                 }
 
-                let newLikeCount = parseInt(likeButton.querySelector('.like-count').textContent);
-
-                if (existingLike && existingLike.length > 0) {
-                    // Si ya existe el like, eliminarlo (quitar like)
-                    const { error: deleteError } = await removeLike(userId, videoId);
-
-                    if (deleteError) {
-                        console.error('Error al quitar like:', deleteError.message);
+                if (isLiked) {
+                    const { error: removeError } = await removeLike(user.id, videoId);
+                    if (!removeError) {
+                        likeButton.classList.remove('liked');
+                        await updateVideoLikeCount(videoId, -1);
+                        const { data: updatedVideo, error: fetchUpdatedError } = await supabase
+                            .from('Videos')
+                            .select('like_count')
+                            .eq('video_id', videoId)
+                            .single();
+                        if (!fetchUpdatedError) {
+                            likeCountSpan.textContent = updatedVideo.like_count;
+                        } else {
+                            console.error('Error al recargar contador tras remover like:', fetchUpdatedError.message);
+                        }
                     } else {
-                        newLikeCount--;
-                        likeButton.querySelector('.like-count').textContent = newLikeCount;
-                        likeButton.classList.remove('liked'); // Quitar estilo de "likeado"
-                        await updateVideoLikeCount(videoId, newLikeCount); // Actualizar en la DB
+                        console.error('Error al remover like:', removeError.message);
                     }
                 } else {
-                    // Si no existe, añadirlo (dar like)
-                    const { error: insertError } = await addLike(userId, videoId);
-
-                    if (insertError) {
-                        console.error('Error al dar like:', insertError.message);
+                    const { error: addError } = await addLike(user.id, videoId);
+                    if (!addError) {
+                        likeButton.classList.add('liked');
+                        await updateVideoLikeCount(videoId, 1);
+                        const { data: updatedVideo, error: fetchUpdatedError } = await supabase
+                            .from('Videos')
+                            .select('like_count')
+                            .eq('video_id', videoId)
+                            .single();
+                        if (!fetchUpdatedError) {
+                            likeCountSpan.textContent = updatedVideo.like_count;
+                        } else {
+                            console.error('Error al recargar contador tras añadir like:', fetchUpdatedError.message);
+                        }
                     } else {
-                        newLikeCount++;
-                        likeButton.querySelector('.like-count').textContent = newLikeCount;
-                        likeButton.classList.add('liked'); // Añadir estilo de "likeado"
-                        await updateVideoLikeCount(videoId, newLikeCount); // Actualizar en la DB
+                        console.error('Error al añadir like:', addError.message);
                     }
                 }
+            });
+        }
+
+        // --- Lógica para el botón de "Comentar" ---
+        const commentButton = videoCard.querySelector('.comment-btn');
+        const commentCountSpan = commentButton.querySelector('.comment-count');
+
+        if (commentButton) {
+            commentButton.addEventListener('click', async () => {
+                currentVideoIdForComments = videoData.video_id; // Establece el video ID actual
+                commentsList.innerHTML = '<p class="loading-message">Cargando comentarios...</p>'; // Muestra mensaje de carga
+                await loadComments(currentVideoIdForComments); // Carga los comentarios para este video
+                openModal(commentsModal); // Abre el modal de comentarios
             });
         }
 
         return videoCard;
     }
 
-    // --- Función para cargar videos desde Supabase ---
-    async function loadVideos() {
-        videoFeed.innerHTML = ''; // Limpiar feed actual
-        const { data: videos, error } = await fetchVideos(); // Llama a la función de supabase.js
+    // --- FUNCIONES PARA GESTIONAR COMENTARIOS ---
+
+    // Función para cargar y mostrar comentarios en el modal
+    async function loadComments(videoId) {
+        commentsList.innerHTML = '<p class="loading-message">Cargando comentarios...</p>';
+        commentStatusMessage.textContent = ''; // Limpiar cualquier mensaje de estado anterior
+
+        const { data: comments, error } = await getCommentsByVideoId(videoId);
 
         if (error) {
-            console.error('Error al cargar videos:', error.message);
+            commentsList.innerHTML = '<p class="error-message">Error al cargar comentarios.</p>';
+            console.error('Error loading comments:', error.message);
             return;
         }
 
-        if (videos.length === 0) {
-            videoFeed.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #aaa;">No hay videos aún. ¡Sube el primero!</p>';
+        if (comments.length === 0) {
+            commentsList.innerHTML = '<p class="no-comments-message">Sé el primero en comentar.</p>';
             return;
         }
 
-        videos.forEach(video => {
-            // Pasamos el objeto video directamente, y createVideoCard accede a video.Users.username, etc.
-            videoFeed.appendChild(createVideoCard(video));
+        commentsList.innerHTML = ''; // Limpiar mensaje de carga
+        comments.forEach(comment => {
+            const commentElement = document.createElement('div');
+            commentElement.classList.add('comment-item');
+            const username = comment.Users ? comment.Users.username : 'Usuario Desconocido';
+            const profilePic = comment.Users ? comment.Users.profile_picture_url : 'https://via.placeholder.com/24';
+            const commentDate = new Date(comment.created_at).toLocaleString(); // Formatear fecha
+
+            commentElement.innerHTML = `
+                <img src="${profilePic}" alt="${username}" class="comment-avatar">
+                <div class="comment-content-wrapper">
+                    <span class="comment-username">@${username}</span>
+                    <p class="comment-text">${comment.content}</p>
+                    <span class="comment-date">${commentDate}</span>
+                </div>
+            `;
+            commentsList.appendChild(commentElement);
+        });
+        commentsList.scrollTop = commentsList.scrollHeight; // Hacer scroll al final para ver el último comentario
+    }
+
+    // Función para publicar un nuevo comentario
+    async function postComment() {
+        const commentContent = commentTextInput.value.trim();
+        if (!commentContent) {
+            commentStatusMessage.textContent = 'El comentario no puede estar vacío.';
+            return;
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            alert('Debes iniciar sesión para comentar.');
+            openModal(authModal);
+            commentStatusMessage.textContent = '';
+            return;
+        }
+
+        commentStatusMessage.textContent = 'Publicando...';
+        const { error } = await addComment(currentVideoIdForComments, user.id, commentContent);
+
+        if (error) {
+            commentStatusMessage.textContent = `Error: ${error.message}`;
+            console.error('Error posting comment:', error.message);
+        } else {
+            commentTextInput.value = ''; // Limpiar input
+            commentStatusMessage.textContent = 'Comentario publicado.';
+
+            // Actualizar contador de comentarios en la tabla Videos
+            await updateVideoCommentCount(currentVideoIdForComments, 1);
+
+            // Re-cargar la lista de comentarios para ver el nuevo
+            await loadComments(currentVideoIdForComments);
+
+            // Opcional: Actualizar el contador de comentarios en la tarjeta de video visible en el feed
+            const videoCardElement = document.querySelector(`.video-card[data-video-id="${currentVideoIdForComments}"]`);
+            if (videoCardElement) {
+                const span = videoCardElement.querySelector('.comment-count');
+                if (span) {
+                    const currentCount = parseInt(span.textContent) || 0;
+                    span.textContent = currentCount + 1;
+                }
+            }
+            setTimeout(() => { commentStatusMessage.textContent = ''; }, 3000); // Limpiar mensaje después de 3 segundos
+        }
+    }
+
+    // Listeners para el modal de comentarios
+    if (closeCommentsModalBtn) {
+        closeCommentsModalBtn.addEventListener('click', () => {
+            closeModal(commentsModal);
+            currentVideoIdForComments = null; // Limpiar el ID del video actual
+            commentTextInput.value = ''; // Asegurarse de que el input esté limpio
+            commentStatusMessage.textContent = ''; // Limpiar mensaje de estado
         });
     }
 
-    // --- Función para subir video a Supabase Storage y registrar en la DB ---
-    document.getElementById('submit-upload-button').addEventListener('click', async () => {
-        const fileInput = document.getElementById('video-file-input');
-        const description = document.getElementById('video-description-input').value;
-        const musicInfo = document.getElementById('video-music-input').value;
-        const uploadStatus = document.getElementById('upload-status');
+    if (postCommentButton) {
+        postCommentButton.addEventListener('click', postComment);
+    }
 
-        if (!fileInput.files.length) {
-            uploadStatus.textContent = 'Por favor, selecciona un archivo de video.';
-            uploadStatus.style.color = 'orange';
-            return;
-        }
-
-        const videoFile = fileInput.files[0];
-        const user = (await supabase.auth.getUser()).data.user;
-
-        if (!user) {
-            uploadStatus.textContent = 'Debes estar logueado para subir videos.';
-            uploadStatus.style.color = 'red';
-            return;
-        }
-
-        uploadStatus.textContent = 'Subiendo video...';
-        uploadStatus.style.color = 'white';
-
-        // 1. Subir el video a Supabase Storage usando la función de supabase.js
-        const { publicUrl, error: uploadError } = await uploadVideoFile(user.id, videoFile);
-
-        if (uploadError) {
-            console.error('Error al subir el video:', uploadError.message);
-            uploadStatus.textContent = `Error al subir el video: ${uploadError.message}`;
-            uploadStatus.style.color = 'red';
-            return;
-        }
-
-        // 2. Insertar los detalles del video en la tabla 'Videos' usando la función de supabase.js
-        const thumbnailUrl = 'https://via.placeholder.com/400x600/000000/FFFFFF?text=Cargando+Video'; // Placeholder
-        const { error: dbError } = await insertVideoDetails({
-            user_id: user.id,
-            video_url: publicUrl, // Usamos la URL pública devuelta
-            thumbnail_url: thumbnailUrl,
-            description: description,
-            music_info: musicInfo
+    if (commentTextInput) {
+        commentTextInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                postComment();
+            }
         });
+    }
 
-        if (dbError) {
-    console.error('Error al guardar en la DB:', dbError); // ✅ muestra todo el objeto
-    console.error('Mensaje de error específico (si existe):', dbError.message); // ✅ muestra el mensaje si lo hay
+    // --- Función de inicialización de la app ---
+    async function initApp() {
+        const { data: { user } } = await supabase.auth.getUser();
+        updateAuthUI(user);
 
-    uploadStatus.textContent = `Error al guardar en la base de datos: ${dbError.message || 'Error desconocido. Revisa la consola.'}`; // ✅ backticks para interpolación
-    uploadStatus.style.color = 'red';
-    return;
-}
+        videoFeed.innerHTML = ''; // Limpiar el feed de videos
 
+        if (DUMMY_VIDEOS.length === 0) {
+            videoFeed.innerHTML = '<p style="text-align:center; margin-top: 50px; color: #aaa;">No hay videos de prueba configurados.</p>';
+            return;
+        }
 
-        uploadStatus.textContent = 'Video subido exitosamente!';
-        uploadStatus.style.color = 'lightgreen';
-        closeModal(uploadModal);
-        document.getElementById('video-description-input').value = '';
-        document.getElementById('video-music-input').value = '';
-        fileInput.value = '';
+        for (const video of DUMMY_VIDEOS) {
+            const videoCard = createVideoCard(video);
+            videoFeed.appendChild(videoCard);
+            // initializeLikeState y la carga de comentarios se llaman dentro de createVideoCard
+        }
+    }
 
-        await loadVideos(); // Recargar el feed para mostrar el nuevo video
+    // Llama a la función de inicialización de la app
+    initApp();
+
+    // Mantener el onAuthStateChange para manejar cambios de autenticación
+    supabase.auth.onAuthStateChange((event, session) => {
+        updateAuthUI(session ? session.user : null);
+        initApp(); // Recargar videos si el estado de autenticación cambia para actualizar likes/comments
     });
 
-    // --- Inicialización: Carga inicial de videos y estado de autenticación ---
-    await loadVideos();
-    const { data: { user } } = await supabase.auth.getUser(); // Obtener el usuario actual al cargar
-    updateAuthUI(user);
-
-    // Sidebar item click (mantiene la funcionalidad existente)
-    const sidebarItems = document.querySelectorAll('.sidebar-item');
-    sidebarItems.forEach(item => {
-        item.addEventListener('click', () => {
-            sidebarItems.forEach(i => i.classList.remove('active'));
-            item.classList.add('active');
-        });
-    });
-});
+}); // Fin de DOMContentLoaded

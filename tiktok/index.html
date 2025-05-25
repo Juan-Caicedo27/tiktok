@@ -12,7 +12,6 @@
         <div class="sidebar-left">
             <div class="sidebar-item active" id="for-you-feed"><i class="fas fa-home"></i> Para Ti</div>
             <div class="sidebar-item"><i class="fas fa-users"></i> Siguiendo</div>
-            <div class="sidebar-item" id="upload-video-btn"><i class="fas fa-plus-square"></i> Subir</div>
             <hr>
             <div class="sidebar-item" id="login-signup-btn"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión / Registrarse</div>
             <div class="sidebar-item user-profile" id="current-user-profile" style="display: none;">
@@ -48,9 +47,9 @@
         </div>
     </div>
 
-    <div id="auth-modal" class="modal">
+    <div id="auth-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
+            <span class="close-button" id="close-auth-modal">&times;</span>
             <h2>Iniciar Sesión / Registrarse</h2>
             <input type="email" id="auth-email" placeholder="Correo electrónico">
             <input type="password" id="auth-password" placeholder="Contraseña">
@@ -59,19 +58,22 @@
         </div>
     </div>
 
-    <div id="upload-modal" class="modal">
+    <div id="comments-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Subir Nuevo Video</h2>
-            <input type="file" id="video-file-input" accept="video/mp4,video/quicktime">
-            <input type="text" id="video-description-input" placeholder="Descripción del video">
-            <input type="text" id="video-music-input" placeholder="Música (ej: Artista - Canción)">
-            <button id="submit-upload-button">Subir Video</button>
-            <p id="upload-status"></p>
+            <span class="close-button" id="close-comments-modal">&times;</span>
+            <h2>Comentarios del Video</h2>
+            <div class="comments-list" id="comments-list">
+                <p class="loading-message">Cargando comentarios...</p>
+            </div>
+            <div class="comment-input-area">
+                <input type="text" id="comment-text-input" placeholder="Añadir un comentario...">
+                <button id="post-comment-button">Publicar</button>
+            </div>
+            <p id="comment-status-message" style="color: red;"></p>
         </div>
     </div>
 
+    <script type="module" src="src/supabase.js"></script>
     <script type="module" src="src/main.js"></script>
-    <script src="src/supabase.js"></script>
 </body>
 </html>

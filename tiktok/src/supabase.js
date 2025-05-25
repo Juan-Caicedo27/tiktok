@@ -1,155 +1,174 @@
-// supabase.js
+// src/supabase.js
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://xmfazjdbzqrtisoyvylu.supabase.co';
+// Reemplaza con tus credenciales de Supabase
+const SUPABASE_URL = 'https://xmfazjdbzqrtisoyvylu.supabase.co/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhtZmF6amRienFydGlzb3l2eWx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgxNDQyMzIsImV4cCI6MjA2MzcyMDIzMn0.ERAXOkMElnRMtY0pm_SekZUxSfyZEUMDeYIGtoDCKjk';
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    console.error("Error: Las variables de entorno de Supabase no están configuradas.");
-    console.error("Asegúrate de tener un archivo .env en la raíz de tu proyecto con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.");
-}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/**
- * Registra un nuevo usuario.
- * @param {string} email
- * @param {string} password
- * @returns {Promise<Object>} { data, error }
- */
+
+// --- FUNCIONES DE AUTENTICACIÓN (SIN CAMBIOS) ---
+
 export async function signUpUser(email, password) {
-    return supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+    });
+    return { data, error };
 }
 
-/**
- * Inicia sesión a un usuario.
- * @param {string} email
- * @param {string} password
- * @returns {Promise<Object>} { data, error }
- */
 export async function signInUser(email, password) {
-    return supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+    return { data, error };
 }
 
-/**
- * Cierra la sesión del usuario actual.
- * @returns {Promise<Object>} { error }
- */
 export async function signOutUser() {
-    return supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    return { error };
 }
 
-/**
- * Obtiene los videos del feed, incluyendo la información del creador.
- * @returns {Promise<Object>} { data, error }
- */
-export async function fetchVideos() {
-    return supabase
+// --- FUNCIONES PARA LIKES (¡CORREGIDAS PARA USAR LA TABLA 'Interactions'!) ---
+
+// Verifica si un usuario ya dio like a un video
+export async function checkLike(user_id, video_id) {
+    const { data, error } = await supabase
+        .from('Interactions') // <-- ¡CAMBIO AQUÍ! Usar 'Interactions'
+        .select('interaction_id') // Puedes seleccionar cualquier columna, 'id' o 'interaction_id'
+        .eq('user_id', user_id)
+        .eq('video_id', video_id)
+        .eq('interaction_type', 'like') // <-- ¡AÑADIDO AQUÍ! Filtrar por tipo 'like'
+        .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error checking like:', error.message);
+        return { data: null, error };
+    }
+    return { data: !!data, error: null };
+}
+
+// Añade un like
+export async function addLike(user_id, video_id) {
+    const { data, error } = await supabase
+        .from('Interactions') // <-- ¡CAMBIO AQUÍ! Usar 'Interactions'
+        .insert([{ user_id, video_id, interaction_type: 'like' }]) // <-- ¡AÑADIDO AQUÍ! Especificar tipo 'like'
+        .select();
+
+    if (error) {
+        console.error('Error adding like:', error.message);
+        return { data: null, error };
+    }
+    return { data, error: null };
+}
+
+// Remueve un like
+export async function removeLike(user_id, video_id) {
+    const { error } = await supabase
+        .from('Interactions') // <-- ¡CAMBIO AQUÍ! Usar 'Interactions'
+        .delete()
+        .eq('user_id', user_id)
+        .eq('video_id', video_id)
+        .eq('interaction_type', 'like'); // <-- ¡AÑADIDO AQUÍ! Filtrar por tipo 'like'
+
+    if (error) {
+        console.error('Error removing like:', error.message);
+        return { error };
+    }
+    return { error: null };
+}
+
+// Actualiza el contador de likes en la tabla Videos (SIN CAMBIOS)
+export async function updateVideoLikeCount(video_id, change) {
+    const { data: video, error: fetchError } = await supabase
         .from('Videos')
+        .select('like_count')
+        .eq('video_id', video_id)
+        .single();
+
+    if (fetchError) {
+        console.error('Error fetching video for like count update:', fetchError.message);
+        return { data: null, error: fetchError };
+    }
+
+    const newLikeCount = (video.like_count || 0) + change;
+
+    const { data, error } = await supabase
+        .from('Videos')
+        .update({ like_count: newLikeCount })
+        .eq('video_id', video_id)
+        .select();
+
+    if (error) {
+        console.error('Error updating video like count:', error.message);
+        return { data: null, error };
+    }
+    return { data, error: null };
+}
+
+// --- FUNCIONES PARA COMENTARIOS (SIN CAMBIOS) ---
+
+export async function addComment(video_id, user_id, content) {
+    const { data, error } = await supabase
+        .from('Comments')
+        .insert([{ video_id, user_id, content }])
+        .select();
+
+    if (error) {
+        console.error('Error adding comment:', error.message);
+        return { data: null, error };
+    }
+    return { data, error: null };
+}
+
+export async function getCommentsByVideoId(video_id) {
+    const { data, error } = await supabase
+        .from('Comments')
         .select(`
-            video_id,
-            video_url,
-            thumbnail_url,
-            description,
-            music_info,
-            view_count,
-            like_count,
-            comment_count,
-            share_count,
+            id,
+            content,
             created_at,
-            Users ( -- Hacemos un join con la tabla Users para obtener información del creador
+            Users (
                 username,
                 profile_picture_url
             )
         `)
-        .order('created_at', { ascending: false }); // Ordena por los más recientes
-}
-
-/**
- * Sube un archivo de video al Storage de Supabase.
- * @param {string} userId El ID del usuario autenticado.
- * @param {File} videoFile El objeto File a subir.
- * @returns {Promise<Object>} { data, error, publicUrl }
- */
-export async function uploadVideoFile(userId, videoFile) {
-    const filePath = `${userId}/${Date.now()}-${videoFile.name}`; // Carpeta por usuario
-    const { data, error } = await supabase.storage
-        .from('videos') // Asegúrate de que este bucket exista en Supabase Storage
-        .upload(filePath, videoFile);
+        .eq('video_id', video_id)
+        .order('created_at', { ascending: true });
 
     if (error) {
+        console.error('Error fetching comments:', error.message);
         return { data: null, error };
     }
-
-    // Obtener la URL pública del archivo subido
-    const { data: publicUrlData } = supabase.storage
-        .from('videos')
-        .getPublicUrl(filePath);
-
-    return { data, error: null, publicUrl: publicUrlData.publicUrl };
+    return { data, error: null };
 }
 
-/**
- * Inserta los detalles de un video en la tabla 'Videos'.
- * @param {Object} videoDetails Objeto con los detalles del video.
- * @returns {Promise<Object>} { data, error }
- */
-export async function insertVideoDetails(videoDetails) {
-    return supabase.from('Videos').insert(videoDetails);
-}
-
-/**
- * Verifica si un usuario ya dio like a un video.
- * @param {string} userId
- * @param {number} videoId
- * @returns {Promise<Object>} { data, error }
- */
-export async function checkLike(userId, videoId) {
-    return supabase
-        .from('Interactions')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('video_id', videoId)
-        .eq('interaction_type', 'like');
-}
-
-/**
- * Agrega un like a un video.
- * @param {string} userId
- * @param {number} videoId
- * @returns {Promise<Object>} { data, error }
- */
-export async function addLike(userId, videoId) {
-    return supabase
-        .from('Interactions')
-        .insert({ user_id: userId, video_id: videoId, interaction_type: 'like' });
-}
-
-/**
- * Elimina un like de un video.
- * @param {string} userId
- * @param {number} videoId
- * @returns {Promise<Object>} { data, error }
- */
-export async function removeLike(userId, videoId) {
-    return supabase
-        .from('Interactions')
-        .delete()
-        .eq('user_id', userId)
-        .eq('video_id', videoId)
-        .eq('interaction_type', 'like');
-}
-
-/**
- * Actualiza el contador de likes de un video en la tabla Videos.
- * @param {number} videoId
- * @param {number} newCount
- * @returns {Promise<Object>} { data, error }
- */
-export async function updateVideoLikeCount(videoId, newCount) {
-    return supabase
+export async function updateVideoCommentCount(video_id, change) {
+    const { data: video, error: fetchError } = await supabase
         .from('Videos')
-        .update({ like_count: newCount })
-        .eq('video_id', videoId);
+        .select('comment_count')
+        .eq('video_id', video_id)
+        .single();
+
+    if (fetchError) {
+        console.error('Error fetching video for comment count update:', fetchError.message);
+        return { data: null, error: fetchError };
+    }
+
+    const newCommentCount = (video.comment_count || 0) + change;
+
+    const { data, error } = await supabase
+        .from('Videos')
+        .update({ comment_count: newCommentCount })
+        .eq('video_id', video_id)
+        .select();
+
+    if (error) {
+        console.error('Error updating video comment count:', error.message);
+        return { data: null, error };
+    }
+    return { data, error: null };
 }
