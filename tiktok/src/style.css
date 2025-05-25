@@ -1,0 +1,367 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+body {
+    margin: 0;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.tiktok-container {
+    display: flex;
+    width: 90%;
+    max-width: 1200px;
+    height: 90vh;
+    background-color: #121212;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+/* Sidebar izquierda */
+.sidebar-left {
+    width: 200px;
+    background-color: #0d0d0d;
+    padding: 20px 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid #222;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-weight: 600;
+    box-sizing: border-box;
+}
+
+.sidebar-item:hover {
+    background-color: #222;
+}
+
+.sidebar-item.active {
+    color: #fe2c55;
+}
+
+.sidebar-item i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.sidebar-left hr {
+    width: 80%;
+    border: none;
+    border-top: 1px solid #333;
+    margin: 15px 0;
+}
+
+.user-profile {
+    font-size: 0.9em;
+}
+
+.user-profile img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+/* Contenido principal de videos */
+.main-content {
+    flex-grow: 1;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+}
+
+.video-feed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.video-card {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    height: 600px;
+    background-color: #000;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.video-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.video-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: #fff;
+    box-sizing: border-box;
+    font-size: 0.9em;
+}
+
+.video-info .creator-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.video-info .creator-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    border: 2px solid #fff;
+}
+
+.video-info .creator-info span {
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.video-info p {
+    margin: 5px 0;
+    line-height: 1.4;
+}
+
+.video-info .hashtags span {
+    color: #4a90e2;
+    margin-right: 5px;
+}
+
+.video-info .music {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.8em;
+}
+
+.video-info .music i {
+    margin-right: 5px;
+}
+
+/* Sidebar derecha de interacción (ahora es un overlay por video) */
+.sidebar-right {
+    display: none; /* Oculta la sidebar derecha global, se inserta en cada video */
+}
+
+/* Estilos para los botones de interacción dentro de cada video */
+.video-interaction-overlay {
+    position: absolute;
+    right: 10px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.interaction-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.interaction-item i {
+    font-size: 2em;
+    margin-bottom: 5px;
+    color: #fff;
+    transition: color 0.2s ease;
+}
+
+.interaction-item span {
+    font-weight: 600;
+}
+
+.interaction-item:hover i {
+    color: #fe2c55;
+}
+
+/* Estilo para el botón de "Me gusta" cuando está activo/likeado */
+.interaction-item.liked i {
+    color: #fe2c55; /* Color rojo de TikTok */
+    transform: scale(1.1); /* Ligera animación */
+}
+
+
+.interaction-item .rotate-icon img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 5px solid #222;
+    box-shadow: 0 0 0 1px #fe2c55;
+    animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Scrollbar personalizado (opcional) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #222;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Estilos para los Modales */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.modal-content {
+    background-color: #1a1a1a;
+    margin: auto;
+    padding: 30px;
+    border: 1px solid #333;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    position: relative;
+    color: #fff;
+    text-align: center;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: #fe2c55;
+}
+
+.modal-content input[type="email"],
+.modal-content input[type="password"],
+.modal-content input[type="text"],
+.modal-content input[type="file"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #0d0d0d;
+    color: #fff;
+    font-size: 1em;
+}
+
+.modal-content button {
+    background-color: #fe2c55;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.modal-content button:hover {
+    background-color: #d12048;
+}
+
+#upload-status {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+/* Media Queries para responsividad básica */
+@media (max-width: 768px) {
+    .tiktok-container {
+        flex-direction: column;
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .sidebar-left, .sidebar-right {
+        display: none;
+    }
+
+    .main-content {
+        width: 100%;
+        padding: 0;
+    }
+
+    .video-card {
+        height: 100vh;
+        border-radius: 0;
+        margin-bottom: 0;
+    }
+
+    .video-interaction-overlay {
+        right: 5px;
+        bottom: 10px;
+        margin-bottom: 15px;
+    }
+}

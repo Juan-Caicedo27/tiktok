@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Clon</title>
+    <link rel="stylesheet" href="src/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="tiktok-container">
+        <div class="sidebar-left">
+            <div class="sidebar-item active" id="for-you-feed"><i class="fas fa-home"></i> Para Ti</div>
+            <div class="sidebar-item"><i class="fas fa-users"></i> Siguiendo</div>
+            <div class="sidebar-item" id="upload-video-btn"><i class="fas fa-plus-square"></i> Subir</div>
+            <hr>
+            <div class="sidebar-item" id="login-signup-btn"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión / Registrarse</div>
+            <div class="sidebar-item user-profile" id="current-user-profile" style="display: none;">
+                <img id="user-avatar-small" src="https://via.placeholder.com/30" alt="Usuario">
+                <span id="username-small"></span>
+            </div>
+            <div class="sidebar-item" id="logout-btn" style="display: none;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-feed" id="videoFeed">
+                </div>
+        </div>
+
+        <div class="sidebar-right">
+            <div class="interaction-buttons">
+                <div class="interaction-item">
+                    <i class="fas fa-heart"></i>
+                    <span>0</span>
+                </div>
+                <div class="interaction-item">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>0</span>
+                </div>
+                <div class="interaction-item">
+                    <i class="fas fa-share"></i>
+                    <span>0</span>
+                </div>
+                <div class="interaction-item rotate-icon">
+                    <img src="https://via.placeholder.com/40" alt="Disco">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Iniciar Sesión / Registrarse</h2>
+            <input type="email" id="auth-email" placeholder="Correo electrónico">
+            <input type="password" id="auth-password" placeholder="Contraseña">
+            <button id="signup-button">Registrarse</button>
+            <button id="login-button">Iniciar Sesión</button>
+        </div>
+    </div>
+
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Subir Nuevo Video</h2>
+            <input type="file" id="video-file-input" accept="video/mp4,video/quicktime">
+            <input type="text" id="video-description-input" placeholder="Descripción del video">
+            <input type="text" id="video-music-input" placeholder="Música (ej: Artista - Canción)">
+            <button id="submit-upload-button">Subir Video</button>
+            <p id="upload-status"></p>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+    <script src="src/supabase.js"></script>
+</body>
+</html>
