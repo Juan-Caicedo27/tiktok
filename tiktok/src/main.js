@@ -1,3 +1,4 @@
+// src/main.js
 import {
     supabase,
     signUpUser,
@@ -5,7 +6,6 @@ import {
     signOutUser,
     addComment,
     getCommentsByVideoId,
-    // updateVideoCommentCount // Ya no es necesario si la tabla Videos no existe
 } from './supabase.js';
 
 // Importa tus videos predeterminados desde videos.js
@@ -76,13 +76,10 @@ async function updateAuthUI() {
 function createVideoCard(videoData) {
     const videoCard = document.createElement('div');
     videoCard.classList.add('video-card');
-    // Usamos el ID de YouTube como nuestro identificador único para el video
     videoCard.dataset.videoId = videoData.id; // videoData.id es el youtube_id
 
-    // Aquí asumimos que los datos del creador vienen junto con videoData en DUMMY_VIDEOS.
-    // Si tus DUMMY_VIDEOS no tienen 'username' o 'profile_picture_url', ajusta esto.
     const creatorUsername = videoData.username || 'Usuario Anónimo';
-    const creatorAvatarUrl = videoData.profile_picture_url || 'https://via.placeholder.com/40';
+    const creatorAvatarUrl = videoData.profile_picture_url || 'src/assets/images/img1.png'; // Usamos tu imagen local
 
     // Construir la URL de incrustación de YouTube usando el youtube_id (videoData.id)
     const youtubeEmbedUrl = `https://www.youtube.com/embed/${videoData.id}?autoplay=0&controls=1&showinfo=0&rel=0&modestbranding=1`;
@@ -137,34 +134,25 @@ function createVideoCard(videoData) {
     const likeCountSpan = likeButton.querySelector('.like-count');
     const heartIcon = likeButton.querySelector('i');
 
-    // Cargar el estado del like desde localStorage al crear la tarjeta
     let likedVideos = JSON.parse(localStorage.getItem('likedVideos')) || {};
     if (likedVideos[videoData.id]) {
         heartIcon.classList.add('liked');
-        // Asegurarse de que el color también se aplique si usas CSS para 'liked' class
     }
 
     likeButton.addEventListener('click', () => {
-        const videoYoutubeId = videoData.id; // Usamos el ID de YouTube como identificador
+        const videoYoutubeId = videoData.id;
         let currentLikeCount = parseInt(likeCountSpan.textContent);
 
         if (heartIcon.classList.contains('liked')) {
-            // Ya le dio like, ahora lo quita (localmente)
             heartIcon.classList.remove('liked');
             likeCountSpan.textContent = currentLikeCount - 1;
-            delete likedVideos[videoYoutubeId]; // Eliminar del objeto de likes
+            delete likedVideos[videoYoutubeId];
             localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
-            // Si tuvieras una tabla de Interacciones para registrar likes individuales:
-            // if (currentUser) removeLike(currentUser.id, videoYoutubeId);
         } else {
-            // No le ha dado like, ahora lo añade (localmente)
             heartIcon.classList.add('liked');
             likeCountSpan.textContent = currentLikeCount + 1;
-            likedVideos[videoYoutubeId] = true; // Guardar que ya le dio like a este video
+            likedVideos[videoYoutubeId] = true;
             localStorage.setItem('likedVideos', JSON.stringify(likedVideos));
-            // Si tuvieras una tabla de Interacciones para registrar likes individuales:
-            // if (currentUser) addLike(currentUser.id, videoYoutubeId);
-            // else alert('Debes iniciar sesión para registrar likes.'); // Si requieres login
         }
     });
 
@@ -182,7 +170,6 @@ function createVideoCard(videoData) {
 // --- Manejo del modal de comentarios ---
 async function loadComments(youtubeId) {
     commentsList.innerHTML = 'Cargando comentarios...';
-    // Asumimos que getCommentsByVideoId puede tomar el ID de YouTube (TEXT)
     const { data: comments, error } = await getCommentsByVideoId(youtubeId);
 
     if (error) {
@@ -195,13 +182,35 @@ async function loadComments(youtubeId) {
     if (comments.length === 0) {
         commentsList.innerHTML = '<p>No hay comentarios aún. ¡Sé el primero!</p>';
     } else {
+        // --- NUEVA LÓGICA: Obtener datos de usuario por separado ---
+        const userIds = [...new Set(comments.map(comment => comment.user_id))];
+        let usersData = {};
+
+        if (userIds.length > 0) {
+            const { data: fetchedUsers, error: usersError } = await supabase
+                .from('Users')
+                .select('id, username, profile_picture_url')
+                .in('id', userIds); // Obtener solo los usuarios que comentaron
+
+            if (usersError) {
+                console.error('Error fetching comment users:', usersError.message);
+                // Si hay error, usersData queda vacío y se usará el fallback
+            } else {
+                fetchedUsers.forEach(user => {
+                    usersData[user.id] = user; // Mapear por ID para fácil acceso
+                });
+            }
+        }
+        // --- FIN NUEVA LÓGICA ---
+
         comments.forEach(comment => {
             const commentItem = document.createElement('div');
             commentItem.classList.add('comment-item');
-            // Asegúrate de que los datos de usuario vienen correctamente con el comentario
-            // via join/rpc si usas la tabla Users, o ten un fallback
-            const authorUsername = comment.Users ? comment.Users.username : 'Anónimo';
-            const authorAvatar = comment.Users ? comment.Users.profile_picture_url : 'https://via.placeholder.com/40';
+
+            // Acceder a la información del usuario desde el objeto usersData
+            const author = usersData[comment.user_id];
+            const authorUsername = author ? author.username : 'Usuario Desconocido';
+            const authorAvatar = author ? author.profile_picture_url : 'src/assets/images/img1.png';
 
             commentItem.innerHTML = `
                 <img src="${authorAvatar}" alt="${authorUsername}">
@@ -233,7 +242,6 @@ postCommentBtn.addEventListener('click', async () => {
         return;
     }
 
-    // Usamos currentVideoYoutubeIdForComments como el video_id (TEXT) para la tabla Comments
     const { data, error } = await addComment(currentVideoYoutubeIdForComments, currentUser.id, content);
 
     if (!error) {
@@ -290,9 +298,7 @@ authForm.addEventListener('submit', async (event) => {
             alert('¡Sesión iniciada con éxito!');
             console.log('User signed in:', data.user);
             authModal.style.display = 'none';
-            await updateAuthUI(); // Actualizar UI después de iniciar sesión
-            // Recargar videos para asegurar el estado de likes (aunque con localStorage es menos crítico)
-            // initApp(); // Esto no es estrictamente necesario ya que los videos son estáticos
+            await updateAuthUI();
         }
     }
 });
@@ -319,8 +325,7 @@ logoutBtn.addEventListener('click', async () => {
         alert('Sesión cerrada con éxito.');
         console.log('User signed out.');
         authModal.style.display = 'none';
-        await updateAuthUI(); // Actualizar UI después de cerrar sesión
-        // initApp(); // No es estrictamente necesario ya que los videos son estáticos
+        await updateAuthUI();
     }
 });
 

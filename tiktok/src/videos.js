@@ -6,7 +6,7 @@ export const DUMMY_VIDEOS = [
         profile_picture_url: 'src/assets/images/img1.png',
         description: 'Rick Astley - Never Gonna Give You Up (Official Music Video). El clásico que no pasa de moda.',
         musicInfo: 'Rick Astley - Never Gonna Give You Up',
-        likes: 1658405248, // Ajustado a valores más realistas si quieres
+        likes: 1658405248,
         comments: 5000000,
         shares: 1000000,
         views: 1658405248
@@ -23,7 +23,7 @@ export const DUMMY_VIDEOS = [
         views: 547837643
     },
     {
-        id: 'L0M0fH0W0j0', // Placeholder para un video de skate más reciente
+        id: 'L0M0fH0W0j0', // Placeholder para un video de skate más reciente (recuerda cambiar si encuentras uno mejor)
         username: 'Skate Vibes',
         profile_picture_url: 'src/assets/images/img1.png',
         description: 'Trucos de skate épicos en cámara lenta. ¡Pura adrenalina!',
