@@ -1,179 +1,150 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
+/* General */
 body {
     margin: 0;
-    font-family: 'Montserrat', sans-serif;
+    font-family: Arial, sans-serif;
     background-color: #000;
     color: #fff;
-    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
-.tiktok-container {
-    display: flex;
-    width: 90%;
-    max-width: 1200px;
-    height: 90vh;
-    background-color: #121212;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-}
-
-/* Sidebar izquierda */
-.sidebar-left {
-    width: 200px;
-    background-color: #0d0d0d;
-    padding: 20px 0;
-    box-sizing: border-box;
+.app-container {
+    width: 100%;
+    max-width: 400px; /* Ancho típico de un teléfono */
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    border-right: 1px solid #222;
+    background-color: #000;
+    position: relative;
+    overflow: hidden; /* Oculta el desbordamiento si los videos son muy grandes */
 }
 
-.sidebar-item {
+/* Header */
+header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
+    padding: 10px 15px;
+    background-color: #000;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
-    padding: 15px 20px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    font-weight: 600;
-    box-sizing: border-box;
+    max-width: 400px;
+    z-index: 100;
+    box-sizing: border-box; /* Incluye padding en el ancho */
 }
 
-.sidebar-item:hover {
-    background-color: #222;
-}
-
-.sidebar-item.active {
-    color: #fe2c55;
-}
-
-.sidebar-item i {
-    margin-right: 10px;
+.logo {
+    font-weight: bold;
     font-size: 1.2em;
 }
 
-.sidebar-left hr {
-    width: 80%;
+.auth-btn {
+    background-color: #e02a5c;
+    color: white;
     border: none;
-    border-top: 1px solid #333;
-    margin: 15px 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-.user-profile {
-    font-size: 0.9em;
-}
-
-.user-profile img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-/* Contenido principal de videos */
-.main-content {
+/* Video Feed */
+.video-feed {
     flex-grow: 1;
     overflow-y: scroll;
-    scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
-}
-
-.video-feed {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 20px;
+    scroll-snap-type: y mandatory; /* Para desplazamiento tipo TikTok */
+    -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iOS */
+    padding-top: 50px; /* Espacio para el header fijo */
+    padding-bottom: 60px; /* Espacio para el footer fijo */
 }
 
 .video-card {
-    position: relative;
     width: 100%;
-    max-width: 400px;
-    height: 600px;
-    background-color: #000;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    overflow: hidden;
+    height: calc(100vh - 110px); /* Altura de la ventana - header - footer */
+    position: relative;
     scroll-snap-align: start;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Alinear contenido al final */
+    padding-bottom: 20px; /* Espacio interno para el contenido */
+    box-sizing: border-box;
 }
 
-.video-card video {
+.video-player-container {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.youtube-iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Para que el video se ajuste sin cortar */
     display: block;
 }
 
 .video-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    position: relative; /* Cambiado de absolute para fluir con el contenido */
+    z-index: 20;
+    padding: 0 15px;
     color: #fff;
-    box-sizing: border-box;
-    font-size: 0.9em;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    /* Asegurarse de que el texto no se superponga con los botones de interacción */
+    margin-right: 80px; /* Espacio para los botones de interacción */
 }
 
-.video-info .creator-info {
+.creator-info {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
 }
 
-.video-info .creator-info img {
+.creator-info img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     margin-right: 10px;
-    border: 2px solid #fff;
+    border: 1px solid #fff;
 }
 
-.video-info .creator-info span {
-    font-weight: 700;
-    font-size: 1.1em;
+.creator-info span {
+    font-weight: bold;
 }
 
-.video-info p {
-    margin: 5px 0;
-    line-height: 1.4;
-}
-
-.video-info .hashtags span {
-    color: #4a90e2;
+.hashtags span {
+    color: #66e0ff;
     margin-right: 5px;
 }
 
-.video-info .music {
+.music {
     display: flex;
     align-items: center;
     margin-top: 10px;
-    font-size: 0.8em;
 }
 
-.video-info .music i {
-    margin-right: 5px;
+.music i {
+    margin-right: 8px;
 }
 
-/* Sidebar derecha de interacción (ahora es un overlay por video) */
-.sidebar-right {
-    display: none; /* Oculta la sidebar derecha global, se inserta en cada video */
-}
-
-/* Estilos para los botones de interacción dentro de cada video */
-.video-interaction-overlay {
+/* Interaction Buttons */
+.interaction-buttons {
     position: absolute;
-    right: 10px;
-    bottom: 20px;
+    right: 15px;
+    bottom: 20px; /* Ajusta esto si el footer es muy alto */
+    z-index: 30;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -183,107 +154,98 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
     cursor: pointer;
-    font-size: 0.8em;
+    font-size: 0.9em;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
 
 .interaction-item i {
-    font-size: 2em;
+    font-size: 2.2em;
     margin-bottom: 5px;
-    color: #fff;
-    transition: color 0.2s ease;
 }
 
-.interaction-item span {
-    font-weight: 600;
-}
-
-.interaction-item:hover i {
-    color: #fe2c55;
-}
-
-/* Estilo para el botón de "Me gusta" cuando está activo/likeado */
 .interaction-item.liked i {
-    color: #fe2c55; /* Color rojo de TikTok */
-    transform: scale(1.1); /* Ligera animación */
+    color: red; /* Color para el corazón cuando está "liked" */
 }
 
 
-.interaction-item .rotate-icon img {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 5px solid #222;
-    box-shadow: 0 0 0 1px #fe2c55;
-    animation: rotate 3s linear infinite;
-}
-
-@keyframes rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Scrollbar personalizado (opcional) */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #222;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #555;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #777;
-}
-
-/* Estilos para los Modales */
-.modal {
-    display: none;
+/* Footer */
+footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #000;
+    padding: 10px 0;
     position: fixed;
-    z-index: 1;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 400px;
+    z-index: 100;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #888;
+    font-size: 0.8em;
+    cursor: pointer;
+}
+
+.nav-item.active {
+    color: #fff;
+}
+
+.nav-item i {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+/* Modals */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Posición fija para cubrir toda la pantalla */
+    z-index: 1000; /* Por encima de todo lo demás */
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.7);
+    overflow: auto; /* Habilitar scroll si el contenido es demasiado grande */
+    background-color: rgba(0,0,0,0.7); /* Fondo semi-transparente oscuro */
     justify-content: center;
     align-items: center;
-    display: flex;
 }
 
 .modal-content {
-    background-color: #1a1a1a;
+    background-color: #222;
     margin: auto;
-    padding: 30px;
-    border: 1px solid #333;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 8px;
     position: relative;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content h2, .modal-content h3 {
     color: #fff;
+    margin-top: 0;
     text-align: center;
 }
 
 .close-button {
     color: #aaa;
-    float: right;
+    position: absolute;
+    right: 15px;
+    top: 10px;
     font-size: 28px;
     font-weight: bold;
-    position: absolute;
-    top: 10px;
-    right: 20px;
     cursor: pointer;
 }
 
@@ -291,77 +253,143 @@ body {
 .close-button:focus {
     color: #fff;
     text-decoration: none;
-    cursor: pointer;
 }
 
-.modal-content h2 {
-    margin-bottom: 20px;
-    color: #fe2c55;
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
 }
 
 .modal-content input[type="email"],
 .modal-content input[type="password"],
-.modal-content input[type="text"],
-.modal-content input[type="file"] {
-    width: calc(100% - 20px);
+.modal-content input[type="text"] {
     padding: 10px;
-    margin-bottom: 15px;
     border: 1px solid #444;
-    border-radius: 5px;
-    background-color: #0d0d0d;
+    border-radius: 4px;
+    background-color: #333;
     color: #fff;
     font-size: 1em;
 }
 
 .modal-content button {
-    background-color: #fe2c55;
+    background-color: #e02a5c;
     color: white;
-    padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 1em;
-    margin: 5px;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.3s ease;
 }
 
 .modal-content button:hover {
-    background-color: #d12048;
+    background-color: #c71e4d;
 }
 
-#upload-status {
-    margin-top: 15px;
+.modal-content button#signup-btn {
+    background-color: #4CAF50; /* Un color diferente para registrarse */
+    margin-top: 10px;
+}
+
+.modal-content button#signup-btn:hover {
+    background-color: #45a049;
+}
+
+.modal-content button#logout-btn {
+    background-color: #666;
+    margin-top: 20px;
+}
+
+.modal-content button#logout-btn:hover {
+    background-color: #555;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Comments Modal Specific */
+.comments-content {
+    height: 80%; /* Para que ocupe más altura en el modal */
+    justify-content: space-between; /* Empujar el input al final */
+}
+
+.comments-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.comment-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    background-color: #333;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.comment-item img {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.comment-info {
+    flex-grow: 1;
+}
+
+.comment-info .comment-author {
+    font-weight: bold;
+    color: #eee;
+    margin-bottom: 2px;
+}
+
+.comment-info .comment-text {
     font-size: 0.9em;
     color: #ccc;
+    line-height: 1.4;
 }
 
-/* Media Queries para responsividad básica */
-@media (max-width: 768px) {
-    .tiktok-container {
-        flex-direction: column;
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
+.comment-input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.comment-input-area input {
+    flex-grow: 1;
+}
+
+.comment-input-area button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+/* Media Queries para pantallas más grandes (simulando un "móvil" en desktop) */
+@media (min-width: 768px) {
+    .app-container {
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        height: 90vh; /* Para que se vea más como un dispositivo */
     }
 
-    .sidebar-left, .sidebar-right {
-        display: none;
+    header {
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
     }
 
-    .main-content {
-        width: 100%;
-        padding: 0;
+    footer {
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
     }
 
-    .video-card {
-        height: 100vh;
-        border-radius: 0;
-        margin-bottom: 0;
-    }
-
-    .video-interaction-overlay {
-        right: 5px;
-        bottom: 10px;
-        margin-bottom: 15px;
+    .modal-content {
+        max-width: 450px; /* Ligeramente más grande en pantallas de escritorio */
     }
 }
