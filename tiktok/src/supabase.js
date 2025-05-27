@@ -29,6 +29,33 @@ export async function signOutUser() {
     return { error };
 }
 
+// --- NUEVA FUNCIÓN: Cambiar Contraseña ---
+export async function updateUserPassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({
+        password: newPassword
+    });
+    return { data, error };
+}
+
+// --- FUNCIÓN MODIFICADA: Eliminar Cuenta (ahora usa la función de base de datos) ---
+export async function deleteUserAccount() {
+    // No necesitamos pasar el userId aquí porque la función SQL usa auth.uid()
+    // y se asegura de que solo el usuario actual se elimine.
+    const { error } = await supabase.rpc('delete_self_user'); // Llama a la función de base de datos
+
+    if (error) {
+        console.error('Error al llamar a delete_self_user:', error);
+        throw new Error(`Error al eliminar la cuenta: ${error.message}`);
+    }
+
+    // La función de base de datos ya eliminó el usuario,
+    // pero es buena práctica cerrar la sesión en el cliente también.
+    await supabase.auth.signOut();
+
+    return { data: { message: "Account deleted successfully" }, error: null }; // Simula un retorno exitoso
+}
+
+
 // --- Funciones de Comentarios ---
 export async function addComment(videoId, userId, content) {
     const { data, error } = await supabase
@@ -43,7 +70,6 @@ export async function addComment(videoId, userId, content) {
     return { data, error };
 }
 
-// Corregido: Ya no intenta hacer embedding de la tabla Users
 export async function getCommentsByVideoId(videoId) {
     const { data, error } = await supabase
         .from('comments')
@@ -52,4 +78,3 @@ export async function getCommentsByVideoId(videoId) {
         .order('created_at', { ascending: true });
     return { data, error };
 }
-

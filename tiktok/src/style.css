@@ -371,6 +371,20 @@ footer {
     font-size: 0.9em;
 }
 
+/* ... (tu CSS existente) ... */
+
+/* Nuevos estilos para el botón de eliminar cuenta */
+.modal-content button.delete-btn {
+    background-color: #d32f2f; /* Rojo oscuro para indicar peligro */
+    margin-top: 10px;
+}
+
+.modal-content button.delete-btn:hover {
+    background-color: #b71c1c; /* Rojo más oscuro al pasar el ratón */
+}
+
+/* ... (el resto de tu CSS) ... */
+
 /* Media Queries para pantallas más grandes (simulando un "móvil" en desktop) */
 @media (min-width: 768px) {
     .app-container {

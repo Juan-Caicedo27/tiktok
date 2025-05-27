@@ -6,6 +6,99 @@
     <title>TikTok Clone</title>
     <link rel="stylesheet" href="src/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Añade estilos básicos para el modal del administrador si no los tienes en style.css */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+        }
+        .modal-content {
+            background-color: #2c2c2c; /* Dark background */
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be responsive */
+            max-width: 700px;
+            border-radius: 8px;
+            position: relative;
+            color: #fff;
+        }
+        .modal-content h2, .modal-content h3 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .modal-content input, .modal-content select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            background-color: #333;
+            color: #fff;
+        }
+        .modal-content button[type="submit"], .modal-content button {
+            background-color: #fe2c55; /* TikTok red */
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            width: 100%; /* Full width */
+        }
+        .modal-content button.delete-btn {
+            background-color: #dc3545; /* Red for delete */
+        }
+        .modal-content button:hover {
+            opacity: 0.9;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .admin-user-item {
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .admin-user-item p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .admin-user-item button {
+            width: auto;
+            margin-right: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        .admin-user-item button.edit-user-btn {
+            background-color: #007bff; /* Blue for edit */
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -13,6 +106,7 @@
             <div class="logo">TikTok Clone</div>
             <nav>
                 <button id="auth-button" class="auth-btn">Iniciar Sesión</button>
+                <button id="admin-panel-btn" class="auth-btn hidden" style="margin-left: 10px;">Panel Admin</button>
             </nav>
         </header>
 
@@ -31,12 +125,14 @@
 <div id="auth-modal" class="modal">
         <div class="modal-content">
             <span class="close-button">×</span>
-            <h2>Autenticacion</h2> <form id="auth-form">
-            
+            <h2>Autenticacion</h2>
+            <form id="auth-form">
                 <input type="email" id="auth-email" placeholder="Correo Electrónico" required>
                 <input type="password" id="auth-password" placeholder="Contraseña" required>
                 <button type="submit" id="signin-btn">Iniciar Sesión</button>
                 <button type="button" id="signup-btn">Registrarse</button>
+                <button type="button" id="change-password-btn" class="hidden">Cambiar Contraseña</button>
+                <button type="button" id="delete-account-btn" class="hidden delete-btn">Eliminar Cuenta</button>
             </form>
             <button id="logout-btn" class="hidden">Cerrar Sesión</button>
         </div>
@@ -44,7 +140,7 @@
 
     <div id="comments-modal" class="modal">
         <div class="modal-content comments-content">
-            <span class="close-button">&times;</span>
+            <span class="close-button">×</span>
             <h3>Comentarios</h3>
             <div id="comments-list" class="comments-list">
                 </div>
@@ -55,7 +151,33 @@
         </div>
     </div>
 
+    <div id="admin-panel-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Administración de Usuarios</h2>
+
+            <h3>Crear Nuevo Usuario</h3>
+            <form id="admin-create-user-form">
+                <input type="email" id="new-admin-user-email" placeholder="Email del nuevo usuario" required>
+                <input type="password" id="new-admin-user-password" placeholder="Contraseña del nuevo usuario" required minlength="6">
+                <input type="text" id="new-admin-username" placeholder="Nombre de usuario" required>
+                <select id="new-admin-user-role">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button type="submit">Crear Usuario</button>
+            </form>
+            <hr>
+
+            <h3>Usuarios Existentes</h3>
+            <div id="admin-users-list">
+                Cargando usuarios...
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="src/supabase.js"></script>
+    <script type="module" src="src/adminCrud.js"></script>
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
