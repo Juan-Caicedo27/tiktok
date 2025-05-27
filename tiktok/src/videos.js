@@ -1,7 +1,7 @@
 // src/videos.js
 export const DUMMY_VIDEOS = [
     {
-        id: '4c7y96nZ86A', // Rick Astley - Never Gonna Give You Up (Nueva versión oficial)
+        id: 'QoDRRiKQ1mI', // Rick Astley - Never Gonna Give You Up (Nueva versión oficial)
         username: 'Rick Astley',
         profile_picture_url: 'src/assets/images/img1.png',
         description: 'Rick Astley - Never Gonna Give You Up (Official Music Video). El clásico que no pasa de moda.',
@@ -12,7 +12,7 @@ export const DUMMY_VIDEOS = [
         views: 1658405248
     },
     {
-        id: 'jfK0kP_PzEY', // lofi hip hop radio 📚 beats to relax/study to (Lofi Girl)
+        id: 'BUVnCtntUek', // lofi hip hop radio 📚 beats to relax/study to (Lofi Girl)
         username: 'Lofi Girl',
         profile_picture_url: 'src/assets/images/img1.png',
         description: 'lofi hip hop radio 📚 beats to relax/study to. Sonidos relajantes para estudiar o descansar.',
@@ -23,7 +23,7 @@ export const DUMMY_VIDEOS = [
         views: 547837643
     },
     {
-        id: 'L0M0fH0W0j0', // Placeholder para un video de skate más reciente (recuerda cambiar si encuentras uno mejor)
+        id: 'TZIWz9eGPa0', // Placeholder para un video de skate más reciente (recuerda cambiar si encuentras uno mejor)
         username: 'Skate Vibes',
         profile_picture_url: 'src/assets/images/img1.png',
         description: 'Trucos de skate épicos en cámara lenta. ¡Pura adrenalina!',
